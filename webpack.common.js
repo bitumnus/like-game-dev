@@ -28,7 +28,7 @@ module.exports = {
         ]
     }),
     new HtmlWebpackPlugin({
-      template: Path.resolve(__dirname, './src/index.html')
+      template: Path.resolve(__dirname, './index.html')
     })
   ],
   resolve: {
