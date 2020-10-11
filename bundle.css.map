@@ -1,0 +1,1 @@
+{"version":3,"sources":["webpack:///src/styles/index.scss"],"names":[],"mappings":"AAAA,OACI,iBAAkB,CAClB,SAAU,CACb,0BAKG,OACI,WAAY,CACf","file":"bundle.css","sourcesContent":["canvas {\r\n    position: absolute;\r\n    left: 10px;\r\n}\r\n\r\n$breakpoint: 768px;\r\n\r\n@media (max-width: #{$breakpoint}) {\r\n    canvas {\r\n        width: 660px;\r\n    }\r\n}"],"sourceRoot":""}
