@@ -1,10 +1,2 @@
-# compiled output
-/dist
-/tmp
-/out-tsc
-
-# production
-build
-
 # dependencies
 /node_modules
