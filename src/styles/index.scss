@@ -1,0 +1,12 @@
+canvas {
+    position: absolute;
+    left: 10px;
+}
+
+$breakpoint: 768px;
+
+@media (max-width: #{$breakpoint}) {
+    canvas {
+        width: 660px;
+    }
+}
