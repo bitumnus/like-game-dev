@@ -17,18 +17,16 @@ module.exports = {
       name: false
     }
   },
-  devServer: {
-    port: 3000,
-  },
   plugins: [
     new CleanWebpackPlugin(),
     new CopyWebpackPlugin({
         patterns: [
             { from: Path.resolve(__dirname, './public'), to: 'public' },
+            { from: Path.resolve(__dirname, './src'), to: 'src' },
         ]
     }),
     new HtmlWebpackPlugin({
-      template: Path.resolve(__dirname, './index.html')
+      template: Path.resolve(__dirname, './src/index.html')
     })
   ],
   resolve: {
@@ -48,7 +46,7 @@ module.exports = {
         use: {
           loader: 'file-loader',
           options: {
-            name: '[path][name].[ext]'
+            name: '[name].[ext]'
           }
         }
       },
