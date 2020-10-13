@@ -5,6 +5,9 @@ import Text from './Text';
 import ButtonActive from './ButtonActive';
 import ButtonOff from './ButtonOff';
 import Infobar from './Infobar';
+import {reelMap} from "./reelmap";
+
+const SYMBOL_SIZE = 200;
 
 export default class App {
     constructor() {
@@ -15,8 +18,10 @@ export default class App {
         this.countRolls = 0;
         this.reelContainer = '';
         this.rollResult = [];
+        this.tweening = [];
         this.id = {};
         this.autoWin = false;
+        this.running = false;
         this.gameOver = false;
         this.displayedWins = 0;
         this.coins = 100;
@@ -50,6 +55,9 @@ export default class App {
             this.createButtonOff();
             this.createReel();
             this.renderInfobar();
+            this.startPlay();
+            this.animateUpdate();
+            this.animateTicker();
         });
         this.loader.onProgress.add(() => {});
         this.loader.onComplete.add(() => {
@@ -82,10 +90,31 @@ export default class App {
             this.countRolls++;
         }
         this.reelContainer.fillReels();
-        this.autoWin = false;
+        this.startPlay();
+        this.animateTicker();
+        this.animateUpdate();
         this.checkWinning();
+        this.autoWin = false;
     }
 
+    startPlay() {
+        if (this.running) return;
+        this.running = true;
+        for (let i = 0; i < this.reelContainer.rollResultItem.length; i++) {
+            const r = this.reelContainer.rollResultItem[i];
+            const extra = Math.floor(Math.random() * this.reelContainer.rollResultItem.length);
+            const target = r.position + 10 + i * 5 + extra;
+            const time = 2500 + i * 600 + extra * 600;
+            this.tweenTo(r, 'position', target, time, this.backout(0.5), null, i === 3 - 1 ? this.reelsComplete() : null);
+        }
+    }
+
+    reelsComplete() {
+        this.running = false;
+    }
+    backout(amount) {
+        return (t) => (--t * t * ((amount + 1) * t + amount) + 1);
+    }    
 
     checkWinning() {
         this.coins -= 5;
@@ -106,7 +135,6 @@ export default class App {
             this.gameOver = true;
             this.disableButton();
         }
-
 
     }
 
@@ -176,4 +204,69 @@ export default class App {
         this.reelContainer.reelContainer.addChild(this.layout.layout, this.text.text);
         setTimeout(this.closeWinMessage.bind(this), 2000);
     }
+
+    tweenTo(object, property, target, time, easing, onchange, oncomplete) {
+        const tween = {
+            object,
+            property,
+            propertyBeginValue: object[property],
+            target,
+            easing,
+            time,
+            change: onchange,
+            complete: oncomplete,
+            start: Date.now(),
+        };
+    
+        this.tweening.push(tween);
+        return tween;
+    }
+    animateUpdate() {
+        this.app.ticker.add((delta) => {
+            for (let i = 0; i < this.reelContainer.rollResultItem.length; i++) {
+                const r = this.reelContainer.rollResultItem[i];
+                r.blur.blurY = (r.position - r.previousPosition) * 8;
+                r.previousPosition = r.position;
+    
+                for (let j = 0; j < r.symbols.length; j++) {
+                    const s = r.symbols[j];
+                    const prevy = s.y;
+                    s.y = ((r.position + j) % 3 ) * SYMBOL_SIZE - 20;
+                    if (s.y < 0 && prevy > SYMBOL_SIZE) {
+                        s.texture = PIXI.Texture.from(this.id.reel[Math.floor(Math.random() * 6)].url);
+                        s.scale.x = s.scale.y = Math.min(SYMBOL_SIZE / s.texture.width, SYMBOL_SIZE / s.texture.height);
+                        s.x = reelMap[j][i].x;
+                    }
+                }
+            }
+        });
+    }
+    
+    animateTicker() {
+        this.app.ticker.add((delta) => {
+            const now = Date.now();
+            const remove = [];
+            for (let i = 0; i < this.tweening.length; i++) {
+                const t = this.tweening[i];
+                const phase = Math.min(1, (now - t.start) / t.time);
+        
+                t.object[t.property] = lerp(t.propertyBeginValue, t.target, t.easing(phase));
+                if (t.change) t.change(t);
+                if (phase === 1) {
+                    t.object[t.property] = t.target;
+                    if (t.complete) t.complete(t);
+                    remove.push(t);
+                }
+            }
+            for (let i = 0; i < remove.length; i++) {
+                this.tweening.splice(this.tweening.indexOf(remove[i]), 1);
+            }
+        });
+        
+        // Basic lerp funtion.
+        function lerp(a1, a2, t) {
+            return a1 * (1 - t) + a2 * t;
+        }
+    }
+
 }
